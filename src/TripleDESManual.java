@@ -379,9 +379,9 @@ public class TripleDESManual {
 
     public static void main(String[] args) {
         String plaintext = "Socorram-me, subi no ônibus em Marrocos";  // Texto a ser criptografado
-        String key1 = "tamyles1";       // 8 caracteres (64 bits)
-        String key2 = "leonardo";       // 8 caracteres
-        String key3 = "rosane44";       // 8 caracteres
+        String key1 = "keyword0";       // 8 caracteres (64 bits)
+        String key2 = "palavra1";       // 8 caracteres
+        String key3 = "chave002";       // 8 caracteres
 
         System.out.println("Texto original: " + plaintext);
 
