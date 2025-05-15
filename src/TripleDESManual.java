@@ -2,132 +2,12 @@ import java.util.Arrays;
 
 public class TripleDESManual {
 
-    // Permutação inicial (IP)
-    private static final int[] IP = {
-            58, 50, 42, 34, 26, 18, 10, 2,
-            60, 52, 44, 36, 28, 20, 12, 4,
-            62, 54, 46, 38, 30, 22, 14, 6,
-            64, 56, 48, 40, 32, 24, 16, 8,
-            57, 49, 41, 33, 25, 17, 9, 1,
-            59, 51, 43, 35, 27, 19, 11, 3,
-            61, 53, 45, 37, 29, 21, 13, 5,
-            63, 55, 47, 39, 31, 23, 15, 7
-    };
-
-    // Permutação final (IP^-1)
-    private static final int[] IP_INV = {
-            40, 8, 48, 16, 56, 24, 64, 32,
-            39, 7, 47, 15, 55, 23, 63, 31,
-            38, 6, 46, 14, 54, 22, 62, 30,
-            37, 5, 45, 13, 53, 21, 61, 29,
-            36, 4, 44, 12, 52, 20, 60, 28,
-            35, 3, 43, 11, 51, 19, 59, 27,
-            34, 2, 42, 10, 50, 18, 58, 26,
-            33, 1, 41, 9, 49, 17, 57, 25
-    };
-
-    // Expansão (E-box): de 32 para 48 bits
-    private static final int[] E = {
-            32, 1, 2, 3, 4, 5,
-            4, 5, 6, 7, 8, 9,
-            8, 9, 10, 11, 12, 13,
-            12, 13, 14, 15, 16, 17,
-            16, 17, 18, 19, 20, 21,
-            20, 21, 22, 23, 24, 25,
-            24, 25, 26, 27, 28, 29,
-            28, 29, 30, 31, 32, 1
-    };
-
-    // Permutação P
-    private static final int[] P = {
-            16, 7, 20, 21, 29, 12, 28, 17,
-            1, 15, 23, 26, 5, 18, 31, 10,
-            2, 8, 24, 14, 32, 27, 3, 9,
-            19, 13, 30, 6, 22, 11, 4, 25
-    };
-
-    // PC-1 (Permuted Choice 1) para gerar chaves de 56 bits a partir de 64 bits
-    private static final int[] PC1 = {
-            57, 49, 41, 33, 25, 17, 9,
-            1, 58, 50, 42, 34, 26, 18,
-            10, 2, 59, 51, 43, 35, 27,
-            19, 11, 3, 60, 52, 44, 36,
-            63, 55, 47, 39, 31, 23, 15,
-            7, 62, 54, 46, 38, 30, 22,
-            14, 6, 61, 53, 45, 37, 29,
-            21, 13, 5, 28, 20, 12, 4
-    };
-
-    // PC-2 (Permuted Choice 2) para gerar subchaves de 48 bits
-    private static final int[] PC2 = {
-            14, 17, 11, 24, 1, 5,
-            3, 28, 15, 6, 21, 10,
-            23, 19, 12, 4, 26, 8,
-            16, 7, 27, 20, 13, 2,
-            41, 52, 31, 37, 47, 55,
-            30, 40, 51, 45, 33, 48,
-            44, 49, 39, 56, 34, 53,
-            46, 42, 50, 36, 29, 32
-    };
-
-    // Número de rotações para cada rodada
-    private static final int[] SHIFTS = {
-            1, 1, 2, 2, 2, 2, 2, 2,
-            1, 2, 2, 2, 2, 2, 2, 1
-    };
-
-    // Substituição S-boxes (8 caixas de 4 linhas x 16 colunas)
-    private static final int[][][] SBOX = new int[][][] {
-            {
-                    {14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7},
-                    {0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8},
-                    {4,1,14,8,13,6,2,11,15,12,9,7,3,10,5,0},
-                    {15,12,8,2,4,9,1,7,5,11,3,14,10,0,6,13}
-            },
-            {
-                    {15,1,8,14,6,11,3,4,9,7,2,13,12,0,5,10},
-                    {3,13,4,7,15,2,8,14,12,0,1,10,6,9,11,5},
-                    {0,14,7,11,10,4,13,1,5,8,12,6,9,3,2,15},
-                    {13,8,10,1,3,15,4,2,11,6,7,12,0,5,14,9}
-            },
-            {
-                    {10,0,9,14,6,3,15,5,1,13,12,7,11,4,2,8},
-                    {13,7,0,9,3,4,6,10,2,8,5,14,12,11,15,1},
-                    {13,6,4,9,8,15,3,0,11,1,2,12,5,10,14,7},
-                    {1,10,13,0,6,9,8,7,4,15,14,3,11,5,2,12}
-            },
-            {
-                    {7,13,14,3,0,6,9,10,1,2,8,5,11,12,4,15},
-                    {13,8,11,5,6,15,0,3,4,7,2,12,1,10,14,9},
-                    {10,6,9,0,12,11,7,13,15,1,3,14,5,2,8,4},
-                    {3,15,0,6,10,1,13,8,9,4,5,11,12,7,2,14}
-            },
-            {
-                    {2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9},
-                    {14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6},
-                    {4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14},
-                    {11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3}
-            },
-            {
-                    {12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11},
-                    {10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8},
-                    {9,14,15,5,2,8,12,3,7,0,4,10,1,13,11,6},
-                    {4,3,2,12,9,5,15,10,11,14,1,7,6,0,8,13}
-            },
-            {
-                    {4,11,2,14,15,0,8,13,3,12,9,7,5,10,6,1},
-                    {13,0,11,7,4,9,1,10,14,3,5,12,2,15,8,6},
-                    {1,4,11,13,12,3,7,14,10,15,6,8,0,5,9,2},
-                    {6,11,13,8,1,4,10,7,9,5,0,15,14,2,3,12}
-            },
-            {
-                    {13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7},
-                    {1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2},
-                    {7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8},
-                    {2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11}
-            }
-    };
-
+    /**
+     * Aplica uma permutação usando uma tabela específica
+     * @param input Vetor de bits de entrada
+     * @param table Tabela de permutação a ser aplicada
+     * @return Vetor de bits permutado
+     */
     public static int[] permute(int[] input, int[] table) {
         int[] output = new int[table.length];
         for (int i = 0; i < table.length; i++) {
@@ -136,7 +16,13 @@ public class TripleDESManual {
         return output;
     }
 
-    // Converte string binária para vetor de int
+    /**
+     * Converte uma string binária (composta por '0's e '1's) em um vetor de inteiros.
+     * Cada caractere da string é convertido para um valor inteiro (0 ou 1).
+     *
+     * @param s String binária a ser convertida (ex: "101010")
+     * @return Vetor de inteiros onde cada elemento representa um bit (ex: [1, 0, 1, 0, 1, 0])
+     */
     public static int[] stringToBitArray(String s) {
         int[] bits = new int[s.length()];
         for (int i = 0; i < s.length(); i++) {
@@ -145,7 +31,12 @@ public class TripleDESManual {
         return bits;
     }
 
-    // Converte vetor de bits para string binária
+    /**
+     * Converte um vetor de bits (valores inteiros 0 ou 1) em uma string binária.
+     *
+     * @param bits Vetor de inteiros representando bits (ex: [1, 0, 1, 0])
+     * @return String binária concatenada (ex: "1010")
+     */
     public static String bitArrayToString(int[] bits) {
         StringBuilder sb = new StringBuilder();
         for (int b : bits) {
@@ -154,7 +45,14 @@ public class TripleDESManual {
         return sb.toString();
     }
 
-    // Rotações à esquerda
+    /**
+     * Realiza uma rotação circular à esquerda (left shift) em um array de bits.
+     * Os bits que "saem" do início são reinseridos no final do array.
+     *
+     * @param bits Array de bits a ser rotacionado (ex: [1, 0, 0, 1])
+     * @param n Número de posições para rotacionar (ex: 2)
+     * @return Novo array com os bits rotacionados (ex: [0, 1, 1, 0] para n=2)
+     */
     private static int[] leftShift(int[] bits, int n) {
         int[] result = new int[bits.length];
         for (int i = 0; i < bits.length; i++) {
@@ -163,26 +61,40 @@ public class TripleDESManual {
         return result;
     }
 
-    // Geração das 16 subchaves de 48 bits
+    /**
+     * Gera as 16 subchaves para o DES
+     * @param key64bits Chave de 64 bits (com bits de paridade)
+     * @return Array com as 16 subchaves de 48 bits
+     */
     public static int[][] generateSubKeys(int[] key64bits) {
-        int[] key56 = permute(key64bits, PC1);
+        int[] key56 = permute(key64bits, Tables.PC1);
         int[] C = Arrays.copyOfRange(key56, 0, 28);
         int[] D = Arrays.copyOfRange(key56, 28, 56);
         int[][] subKeys = new int[16][48];
 
         for (int i = 0; i < 16; i++) {
-            C = leftShift(C, SHIFTS[i]);
-            D = leftShift(D, SHIFTS[i]);
+            C = leftShift(C, Tables.SHIFTS[i]);
+            D = leftShift(D, Tables.SHIFTS[i]);
             int[] CD = new int[56];
             System.arraycopy(C, 0, CD, 0, 28);
             System.arraycopy(D, 0, CD, 28, 28);
-            subKeys[i] = permute(CD, PC2);
+            subKeys[i] = permute(CD, Tables.PC2);
         }
 
         return subKeys;
     }
 
-    // XOR entre dois vetores
+    /**
+     * Realiza uma operação XOR (OU exclusivo) bit-a-bit entre dois vetores de inteiros.
+     *
+     * Este método é fundamental para o processo de criptografia DES/3DES, sendo utilizado:
+     * - Na função Feistel para combinar o texto expandido com a subchave
+     * - Em várias etapas de mistura (diffusion) do algoritmo
+     *
+     * @param a Primeiro vetor de bits (deve conter apenas 0s e 1s)
+     * @param b Segundo vetor de bits (deve ter o mesmo comprimento de 'a')
+     * @return Novo vetor contendo o resultado do XOR entre cada bit correspondente
+     */
     public static int[] xor(int[] a, int[] b) {
         int[] result = new int[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -191,14 +103,18 @@ public class TripleDESManual {
         return result;
     }
 
-    // Aplicação das S-boxes (de 48 bits para 32 bits)
+    /**
+     * Executa uma rodada de substituição S-box
+     * @param input48 Bloco de 48 bits
+     * @return Bloco reduzido para 32 bits
+     */
     public static int[] sBoxSubstitution(int[] input48) {
         int[] output32 = new int[32];
         for (int i = 0; i < 8; i++) {
             int[] block = Arrays.copyOfRange(input48, i * 6, (i + 1) * 6);
             int row = (block[0] << 1) | block[5];
             int col = (block[1] << 3) | (block[2] << 2) | (block[3] << 1) | block[4];
-            int val = SBOX[i][row][col];
+            int val = Tables.SBOX[i][row][col];
             for (int j = 0; j < 4; j++) {
                 output32[i * 4 + (3 - j)] = (val >> j) & 1;
             }
@@ -206,17 +122,35 @@ public class TripleDESManual {
         return output32;
     }
 
-    // Função Feistel F
+    /**
+     * Função Feistel (F) - Coração do DES
+     * @param R Metade direita de 32 bits
+     * @param subKey Subchave de 48 bits para esta rodada
+     * @return Resultado de 32 bits da função F
+     */
     public static int[] feistel(int[] R, int[] subKey) {
-        int[] expandedR = permute(R, E);
+        int[] expandedR = permute(R, Tables.E);
         int[] xorResult = xor(expandedR, subKey);
         int[] sboxResult = sBoxSubstitution(xorResult);
-        return permute(sboxResult, P);
+        return permute(sboxResult, Tables.P);
     }
 
-
+    /**
+     * Criptografa um bloco de 64 bits usando o algoritmo DES padrão.
+     *
+     * Este método implementa o fluxo principal do DES:
+     * 1. Aplica a permutação inicial (IP)
+     * 2. Divide o bloco em dois halves (L0 e R0) de 32 bits cada
+     * 3. Executa 16 rodadas Feistel
+     * 4. Troca os halves finais (R16 e L16)
+     * 5. Aplica a permutação inversa (IP^-1)
+     *
+     * @param plaintext64 Bloco de texto claro de 64 bits (como array de ints 0/1)
+     * @param key64 Chave de 64 bits (incluindo bits de paridade não usados)
+     * @return Bloco cifrado de 64 bits
+     */
     public static int[] encryptDES(int[] plaintext64, int[] key64) {
-        int[] permutedInput = permute(plaintext64, IP);
+        int[] permutedInput = permute(plaintext64, Tables.IP);
         int[] L = Arrays.copyOfRange(permutedInput, 0, 32);
         int[] R = Arrays.copyOfRange(permutedInput, 32, 64);
         int[][] subKeys = generateSubKeys(key64);
@@ -231,12 +165,21 @@ public class TripleDESManual {
         int[] preOutput = new int[64];
         System.arraycopy(R, 0, preOutput, 0, 32);
         System.arraycopy(L, 0, preOutput, 32, 32);
-        return permute(preOutput, IP_INV);
+        return permute(preOutput, Tables.IP_INV);
     }
 
-    // Descriptografa um bloco de 64 bits com uma chave de 64 bits
+    /**
+     * Decriptografa um bloco de 64 bits usando o algoritmo DES padrão.
+     *
+     * O processo é idêntico à criptografia, mas com as subchaves aplicadas
+     * em ordem inversa (K16 até K1). Isso aproveita a estrutura reversível do DES.
+     *
+     * @param ciphertext64 Bloco cifrado de 64 bits (como array de ints 0/1)
+     * @param key64 Chave de 64 bits (deve ser a mesma usada na criptografia)
+     * @return Bloco de texto claro de 64 bits
+     */
     public static int[] decryptDES(int[] ciphertext64, int[] key64) {
-        int[] permutedInput = permute(ciphertext64, IP);
+        int[] permutedInput = permute(ciphertext64, Tables.IP);
         int[] L = Arrays.copyOfRange(permutedInput, 0, 32);
         int[] R = Arrays.copyOfRange(permutedInput, 32, 64);
         int[][] subKeys = generateSubKeys(key64);
@@ -251,28 +194,48 @@ public class TripleDESManual {
         int[] preOutput = new int[64];
         System.arraycopy(R, 0, preOutput, 0, 32);
         System.arraycopy(L, 0, preOutput, 32, 32);
-        return permute(preOutput, IP_INV);
+        return permute(preOutput, Tables.IP_INV);
     }
 
-    // 3DES com 3 chaves distintas: E(K3, D(K2, E(K1, P)))
+    /**
+     * Criptografa usando 3DES com três chaves (EDE)
+     * Padrão: C = E(K3, D(K2, E(K1, P)))
+     * @param plaintext64 Bloco de 64 bits de texto claro
+     * @param k1 Primeira chave de 64 bits
+     * @param k2 Segunda chave de 64 bits
+     * @param k3 Terceira chave de 64 bits
+     * @return Texto cifrado de 64 bits
+     */
     public static int[] encrypt3DES(int[] plaintext64, int[] k1, int[] k2, int[] k3) {
         int[] step1 = encryptDES(plaintext64, k1);
         int[] step2 = decryptDES(step1, k2);
         return encryptDES(step2, k3);
     }
 
-    // 3DES decriptação com 3 chaves: D(K1, E(K2, D(K3, C)))
+    /**
+     * Decripta usando 3DES com três chaves (EDE)
+     * Padrão: P = D(K1, E(K2, D(K3, C)))
+     * @param ciphertext64 Bloco de 64 bits de texto cifrado
+     * @param k1 Primeira chave de 64 bits
+     * @param k2 Segunda chave de 64 bits
+     * @param k3 Terceira chave de 64 bits
+     * @return Texto claro de 64 bits
+     */
     public static int[] decrypt3DES(int[] ciphertext64, int[] k1, int[] k2, int[] k3) {
         int[] step1 = decryptDES(ciphertext64, k3);
         int[] step2 = encryptDES(step1, k2);
         return decryptDES(step2, k1);
     }
 
+    /**
+     * Converte texto ASCII para representação binária (string de bits)
+     * @param input String ASCII
+     * @return String binária representando o texto
+     */
     public static String asciiToBinary(String input) {
         StringBuilder binary = new StringBuilder();
         for (char c : input.toCharArray()) {
             String charBinary = Integer.toBinaryString(c);
-            // Pad each character to 8 bits
             while (charBinary.length() < 8) {
                 charBinary = "0" + charBinary;
             }
@@ -281,6 +244,11 @@ public class TripleDESManual {
         return binary.toString();
     }
 
+    /**
+     * Converte string binária para texto ASCII
+     * @param binary String de bits (0s e 1s)
+     * @return String ASCII correspondente
+     */
     public static String binaryToAscii(String binary) {
         StringBuilder ascii = new StringBuilder();
         for (int i = 0; i < binary.length(); i += 8) {
@@ -290,36 +258,53 @@ public class TripleDESManual {
         return ascii.toString();
     }
 
-    // Pad binary string to multiple of 64 bits
+    /**
+     * Realiza o padding (preenchimento) de uma string binária para que seu tamanho seja múltiplo de 64 bits.
+     *
+     * Este método é essencial para o processamento de dados no DES/3DES, que opera em blocos fixos de 64 bits.
+     * Caso o tamanho original não seja múltiplo de 64 bits, adiciona zeros ('0') ao final até completar.
+     *
+     * @param binary String binária a ser padronizada (composta por '0's e '1's)
+     * @return String binária com tamanho múltiplo de 64 bits
+     */
     public static String padTo64Bits(String binary) {
         int padding = 64 - (binary.length() % 64);
         if (padding != 64) {
             StringBuilder padded = new StringBuilder(binary);
             for (int i = 0; i < padding; i++) {
-                padded.append('0'); // Using zero padding
+                padded.append('0');
             }
             return padded.toString();
         }
         return binary;
     }
 
-    // Process ASCII text through 3DES encryption
+    /**
+     * Criptografa texto ASCII usando o algoritmo 3DES (Triple DES) no modo EDE (Encrypt-Decrypt-Encrypt).
+     *
+     * O processo completo inclui:
+     * 1. Padding PKCS#7 do texto original
+     * 2. Conversão para representação binária
+     * 3. Divisão em blocos de 64 bits
+     * 4. Aplicação do 3DES em cada bloco com as três chaves
+     *
+     * @param text Texto claro em formato ASCII
+     * @param key1 Primeira chave (8 caracteres ASCII ou 64 bits binários)
+     * @param key2 Segunda chave (8 caracteres ASCII ou 64 bits binários)
+     * @param key3 Terceira chave (8 caracteres ASCII ou 64 bits binários)
+     * @return Texto cifrado em representação binária (string de 0s e 1s)
+     */
     public static String encryptText3DES(String text, String key1, String key2, String key3) {
-        // Adiciona padding PKCS#7 antes de converter para binário
         String paddedText = addPKCS7Padding(text);
-        // Convert ASCII text to binary
         String binaryText = asciiToBinary(paddedText);
-        // Pad to multiple of 64 bits
         binaryText = padTo64Bits(binaryText);
 
-        // Convert keys to binary if they're not already
         String binaryKey1 = padTo64Bits(asciiToBinary(key1)).substring(0, 64);
         String binaryKey2 = key2.length() == 64 ? key2 : asciiToBinary(key2).substring(0, 64);
         String binaryKey3 = key3.length() == 64 ? key3 : asciiToBinary(key3).substring(0, 64);
 
         StringBuilder encryptedBinary = new StringBuilder();
 
-        // Process each 64-bit block
         for (int i = 0; i < binaryText.length(); i += 64) {
             String block = binaryText.substring(i, Math.min(i + 64, binaryText.length()));
             int[] data = stringToBitArray(block);
@@ -334,16 +319,28 @@ public class TripleDESManual {
         return encryptedBinary.toString();
     }
 
-    // Process binary ciphertext through 3DES decryption
+    /**
+     * Descriptografa texto cifrado binário usando o algoritmo 3DES (Triple DES) no modo DED (Decrypt-Encrypt-Decrypt).
+     *
+     * O processo inverso inclui:
+     * 1. Processamento de cada bloco de 64 bits
+     * 2. Aplicação do 3DES reverso com as três chaves
+     * 3. Conversão do resultado binário para ASCII
+     * 4. Remoção do padding PKCS#7
+     *
+     * @param binaryCipher Texto cifrado em formato binário (string de 0s e 1s)
+     * @param key1 Primeira chave (deve ser a mesma usada na criptografia)
+     * @param key2 Segunda chave (deve ser a mesma usada na criptografia)
+     * @param key3 Terceira chave (deve ser a mesma usada na criptografia)
+     * @return Texto claro original em formato ASCII
+     */
     public static String decryptText3DES(String binaryCipher, String key1, String key2, String key3) {
-        // Convert keys to binary if they're not already
         String binaryKey1 = padTo64Bits(asciiToBinary(key1)).substring(0, 64);
         String binaryKey2 = key2.length() == 64 ? key2 : asciiToBinary(key2).substring(0, 64);
         String binaryKey3 = key3.length() == 64 ? key3 : asciiToBinary(key3).substring(0, 64);
 
         StringBuilder decryptedBinary = new StringBuilder();
 
-        // Process each 64-bit block
         for (int i = 0; i < binaryCipher.length(); i += 64) {
             String block = binaryCipher.substring(i, Math.min(i + 64, binaryCipher.length()));
             int[] data = stringToBitArray(block);
@@ -355,41 +352,54 @@ public class TripleDESManual {
             decryptedBinary.append(bitArrayToString(decrypted));
         }
 
-        // Convert binary back to ASCII
         String decryptedText = binaryToAscii(decryptedBinary.toString());
         return removePKCS7Padding(decryptedText);
     }
 
-    // Adiciona padding PKCS#7 ao texto antes de criptografar
+    /**
+     * Adiciona padding PKCS#7 para garantir múltiplos de 8 bytes
+     * @param text Texto de entrada
+     * @return Texto com padding adicionado
+     */
     public static String addPKCS7Padding(String text) {
         int padSize = 8 - (text.length() % 8);
         char padChar = (char) padSize;
         return text + String.valueOf(padChar).repeat(padSize);
     }
 
-    // Remove padding PKCS#7 após descriptografar
+    /**
+     * Remove padding PKCS#7 após decriptação
+     * @param text Texto com padding
+     * @return Texto original sem padding
+     */
     public static String removePKCS7Padding(String text) {
         if (text.isEmpty()) return text;
         int padSize = text.charAt(text.length() - 1);
         if (padSize > 0 && padSize <= 8) {
             return text.substring(0, text.length() - padSize);
         }
-        return text; // Se não houver padding válido, retorna o original
+        return text;
     }
 
+    /**
+     * Método principal demonstra o uso do 3DES
+     * 1. Criptografa texto com 3 chaves
+     * 2. Decripta o resultado
+     * 3. Mostra o texto original e decriptado
+     */
     public static void main(String[] args) {
-        String plaintext = "Socorram-me, subi no ônibus em Marrocos";  // Texto a ser criptografado
-        String key1 = "tamyles1";       // 8 caracteres (64 bits)
-        String key2 = "leonardo";       // 8 caracteres
-        String key3 = "rosane44";       // 8 caracteres
+        String plaintext = "Socorram-me, subi no ônibus em Marrocos";
+        String key1 = "tamyles1";
+        String key2 = "leonardo";
+        String key3 = "rosane44";
 
         System.out.println("Texto original: " + plaintext);
 
-        // Criptografa
+        // Criptografa (3DES EDE)
         String encrypted = encryptText3DES(plaintext, key1, key2, key3);
         System.out.println("Criptografado (binário): " + encrypted);
 
-        // Decriptografa
+        // Decriptografa (3DES DED)
         String decrypted = decryptText3DES(encrypted, key1, key2, key3);
         System.out.println("Decriptografado: '" + decrypted +"'");
     }
