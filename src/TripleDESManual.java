@@ -389,9 +389,9 @@ public class TripleDESManual {
      */
     public static void main(String[] args) {
         String plaintext = "Socorram-me, subi no ônibus em Marrocos";
-        String key1 = "";
-        String key2 = "";
-        String key3 = "";
+        String key1 = "A7b9X2qL";
+        String key2 = "Z8kLm3Pq";
+        String key3 = "J4rT7vBn";
 
         System.out.println("Texto original: " + plaintext);
 
